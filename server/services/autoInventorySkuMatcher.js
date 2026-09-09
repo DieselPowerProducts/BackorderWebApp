@@ -13,7 +13,6 @@ function normalizeSkuKey(value) {
 }
 
 function getSkuMatchKeys(value) {
-  const safeValue = normalizeSkuKey(value);
   const keys = new Set();
   const addKey = (keyValue) => {
     const key = normalizeSkuKey(keyValue);
@@ -23,12 +22,28 @@ function getSkuMatchKeys(value) {
     }
   };
 
-  addKey(safeValue);
+  const values = [value];
+  const colonParts = normalizeText(value)
+    .split(/[:\uFF1A]/)
+    .map((part) => part.trim())
+    .filter(Boolean);
 
-  const parts = safeValue.split("-").filter(Boolean);
+  // ATS sheets prefix the actual SKU with an application/group label, such as
+  // "306-10 : 309-914-8380". Keep the full value and expose the final segment.
+  if (colonParts.length > 1) {
+    values.push(colonParts[colonParts.length - 1]);
+  }
 
-  if (parts.length > 1 && /^[a-z]+$/.test(parts[0])) {
-    addKey(parts.slice(1).join("-"));
+  for (const candidateValue of values) {
+    const safeValue = normalizeSkuKey(candidateValue);
+
+    addKey(safeValue);
+
+    const parts = safeValue.split("-").filter(Boolean);
+
+    if (parts.length > 1 && /^[a-z]+$/.test(parts[0])) {
+      addKey(parts.slice(1).join("-"));
+    }
   }
 
   for (const key of Array.from(keys)) {

@@ -332,6 +332,41 @@ test("prefers an exact sheet SKU over a fuzzy lookalike row", async () => {
   }, vendorProducts);
 });
 
+test("captures an ATS SKU after its colon-delimited application label", async () => {
+  const vendorProducts = [
+    {
+      id: "vendor-product-ats",
+      vendor_id: "vendor-ats",
+      product_id: "product-ats",
+      product_sku: "ATS-309-914-8380",
+      sku: "309-914-8380",
+      label: "309-914-8380",
+      quantity: 0,
+      status: 1
+    }
+  ];
+
+  await withStagingHarness(async ({ staged, stageSheetAttachment }) => {
+    const result = await stageSheetAttachment({
+      settings: { ...stagingSettings, vendorId: "vendor-ats" },
+      attachment: {
+        filename: "PPU Update 9-9.csv",
+        contentType: "text/csv",
+        content: Buffer.from("Item,Available\n306-10 : 309-914-8380,2\n")
+      },
+      message: { uid: "gmail-ats", messageId: "message-ats" }
+    });
+
+    assert.equal(result.autoApply, true);
+    assert.equal(staged[0].summary.missingSkuRows, 0);
+    assert.equal(staged[0].rows.length, 1);
+    assert.equal(staged[0].rows[0].productSku, "ATS-309-914-8380");
+    assert.equal(staged[0].rows[0].sheetSku, "306-10 : 309-914-8380");
+    assert.equal(staged[0].rows[0].inventoryValue, "2");
+    assert.equal(staged[0].rows[0].proposedQuantity, 999999);
+  }, vendorProducts);
+});
+
 test("stages changed headers as needs mapping", async () => {
   await withStagingHarness(async ({ staged, stageSheetAttachment }) => {
     const result = await stageSheetAttachment({

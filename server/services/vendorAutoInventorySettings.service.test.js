@@ -52,6 +52,16 @@ test("SKU matching tolerates vendor grouping dashes", () => {
   );
 });
 
+test("SKU matching recognizes ATS application labels before colon-delimited SKUs", () => {
+  const productSkuKeys = getSkuMatchKeys("ATS-309-914-8380");
+  const sheetSkuKeys = getSkuMatchKeys("306-10 : 309-914-8380");
+
+  assert.equal(
+    productSkuKeys.some((key) => sheetSkuKeys.includes(key)),
+    true
+  );
+});
+
 test("SKU matching does not collapse short ambiguous keys", () => {
   assert.equal(getSkuMatchKeys("AB-12").includes("ab12"), false);
 });
