@@ -118,6 +118,12 @@ targeted product refresh path for a single SKU.
 Inactive SKU Nexus products should not show on the site. Product queries filter
 `state` to active locally; sync code stores `state`.
 
+The nightly full catalog sync repairs blank vendor SKUs in SKU Nexus before
+writing vendor products to the local catalog. It reuses an unambiguous SKU from
+another vendor assigned to the same product, removes a product prefix only when
+that vendor's existing mappings establish the pattern, and otherwise uses the
+full product SKU. Failed repairs remain blank so the next full sync retries them.
+
 Kit quick-ship automation runs after successful warehouse data refreshes:
 
 - Code lives in `server/services/kitQuickShip.service.js`.

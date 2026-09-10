@@ -4,7 +4,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "pretest": "npm run test:packing-lists",
+    "pretest": "npm run test:packing-lists && node --check server/services/vendorSkuBackfill.service.js && node --test server/services/vendorSkuBackfill.service.test.js",
     "test:packing-lists": "node --check server/services/packingLists.service.js && node --check server/controllers/packingLists.controller.js && node --check server/routes/packingLists.routes.js && node --test server/services/packingLists.service.test.js",
     "dev": "node scripts/dev.mjs",
     "dev:web": "vite --host 0.0.0.0",

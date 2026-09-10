@@ -9,6 +9,7 @@ const stockCheckEmailsService = require("./stockCheckEmails.service");
 const autoInventoryProductUpdatesService = require("./vendorAutoInventoryProductUpdates.service");
 const vendorAutoInventorySettingsService = require("./vendorAutoInventorySettings.service");
 const vendorSettingsService = require("./vendorSettings.service");
+const vendorSkuBackfillService = require("./vendorSkuBackfill.service");
 const {
   buildSkuExceptionKeys,
   getEffectiveSkuExceptions,
@@ -3391,6 +3392,19 @@ async function runFullSync({ reason = "manual" } = {}) {
       .map((row) => row.sku)
       .filter(Boolean);
     const componentRows = flattenProductComponents(normalizedProducts);
+    const vendorSkuBackfill =
+      await vendorSkuBackfillService.backfillMissingVendorSkus({
+        products: normalizedProducts,
+        vendorProducts
+      });
+
+    if (vendorSkuBackfill.failed > 0) {
+      console.error("Vendor SKU backfill completed with failures.", {
+        failed: vendorSkuBackfill.failed,
+        failures: vendorSkuBackfill.failures,
+        requested: vendorSkuBackfill.requested
+      });
+    }
 
     await upsertProducts(normalizedProducts, syncStamp);
     await upsertComponents(componentRows, syncStamp);
@@ -3427,6 +3441,7 @@ async function runFullSync({ reason = "manual" } = {}) {
       products: normalizedProducts.length,
       vendors: vendors.length,
       vendorProducts: vendorProducts.length,
+      vendorSkuBackfill,
       warehouseProducts: warehouseStockRows.length,
       kitQuickShip,
       newProductShopifyAvailability,
